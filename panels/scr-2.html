@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>会員向けアプリ開発管理システム</title>
-  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>会員向けアプリの開発データ一覧 - 会員向けアプリの開発</title>
   <script>
 window.AIVIC_API_URL = "https://mkwmoife37uqyv4zhy4yhweozq0oddxn.lambda-url.us-east-1.on.aws/";
 window.AIVIC_APP_ID = "session-1780371834361";
@@ -12,919 +11,307 @@ window.AIVIC_SYSTEM_NAME = "会員向けアプリの開発";
 window.AIVIC_TABLES = [];
 window.AIVIC_PRESET_SEED = {};
 window.AIVIC_PAGE_SCREEN_ID = "scr-2";
-window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const tbody = container.querySelector('#app-development-tbody');\n  \n  // ステータス別の色分け\n  function getStatusBadge(status) {\n    const statusColors = {\n      '企画中': 'bg-blue-100 text-blue-800 border-blue-200',\n      '開発中': 'bg-yellow-100 text-yellow-800 border-yellow-200',\n      'テスト中': 'bg-purple-100 text-purple-800 border-purple-200',\n      'リリース済み': 'bg-green-100 text-green-800 border-green-200',\n      '保守中': 'bg-gray-100 text-gray-800 border-gray-200'\n    };\n    const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800 border-gray-200';\n    return `<span class=\"inline-block px-2 py-1 text-xs rounded border ${colorClass}\">${status || '-'}</span>`;\n  }\n  \n  // 進捗バー\n  function getProgressBar(progress) {\n    const percent = Math.min(100, Math.max(0, progress || 0));\n    const color = percent >= 80 ? '#10b981' : percent >= 50 ? '#f59e0b' : '#ef4444';\n    return `\n      <div class=\"flex items-center gap-2\">\n        <div class=\"w-16 h-2 bg-rgba(255,255,255,0.1) rounded-full overflow-hidden\">\n          <div class=\"h-full transition-all\" style=\"width: ${percent}%; background-color: ${color};\"></div>\n        </div>\n        <span class=\"text-xs text-[var(--text-muted)]\">${percent}%</span>\n      </div>\n    `;\n  }\n  \n  // テーブル再描画関数\n  function renderRows(rows) {\n    tbody.innerHTML = rows.map(row => `\n      <tr class=\"border-b border-[var(--border)] hover:bg-rgba(255,255,255,0.02) cursor-pointer\" data-id=\"${row.id}\">\n        <td class=\"px-4 py-3\">\n          <div class=\"font-medium text-[var(--text)]\">${row.app_name || '-'}</div>\n          <div class=\"text-xs text-[var(--text-muted)]\">${row.description || ''}</div>\n        </td>\n        <td class=\"px-4 py-3\">${getStatusBadge(row.status)}</td>\n        <td class=\"px-4 py-3 text-sm text-[var(--text)]\">${row.platform || '-'}</td>\n        <td class=\"px-4 py-3 text-sm text-[var(--text)]\">${row.assignee || '-'}</td>\n        <td class=\"px-4 py-3\">${getProgressBar(row.progress)}</td>\n        <td class=\"px-4 py-3 text-sm text-[var(--text)]\">${row.start_date || '-'}</td>\n        <td class=\"px-4 py-3 text-sm text-[var(--text)]\">${row.end_date || '-'}</td>\n        <td class=\"px-4 py-3\">\n          <div class=\"flex gap-1\">\n            <button class=\"action-btn secondary edit-btn text-xs px-2 py-1\" data-id=\"${row.id}\">編集</button>\n            <button class=\"action-btn secondary delete-btn text-xs px-2 py-1\" data-id=\"${row.id}\">削除</button>\n          </div>\n        </td>\n      </tr>\n    `).join('');\n    \n    // 結果件数と統計を更新\n    container.querySelector('#result-count').textContent = rows.length;\n    updateStats(rows);\n  }\n  \n  // 統計情報更新\n  function updateStats(rows) {\n    const total = rows.length;\n    const developing = rows.filter(r => r.status === '開発中').length;\n    const released = rows.filter(r => r.status === 'リリース済み').length;\n    \n    container.querySelector('#stat-total').textContent = total;\n    container.querySelector('#stat-developing').textContent = developing;\n    container.querySelector('#stat-released').textContent = released;\n  }\n  \n  // 初期データ表示\n  renderRows(tables[0]?.records || []);\n  \n  // 検索・フィルタ処理\n  async function performSearch() {\n    const appName = container.querySelector('#search-app-name').value.toLowerCase();\n    const status = container.querySelector('#filter-status').value;\n    const platform = container.querySelector('#filter-platform').value;\n    const assignee = container.querySelector('#search-assignee').value.toLowerCase();\n    const startDate = container.querySelector('#filter-start-date').value;\n    const endDate = container.querySelector('#filter-end-date').value;\n    \n    const allRows = await window.aivicApi.list(0);\n    if (!allRows) return;\n    \n    let filteredRows = allRows.filter(row => {\n      if (appName && !((row.app_name || '').toLowerCase().includes(appName))) return false;\n      if (status && row.status !== status) return false;\n      if (platform && row.platform !== platform) return false;\n      if (assignee && !((row.assignee || '').toLowerCase().includes(assignee))) return false;\n      if (startDate && row.start_date && row.start_date < startDate) return false;\n      if (endDate && row.end_date && row.end_date > endDate) return false;\n      return true;\n    });\n    \n    // 並び替え適用\n    const sortField = container.querySelector('#sort-field').value;\n    const sortOrder = container.querySelector('#sort-order').value;\n    \n    filteredRows.sort((a, b) => {\n      let aVal = a[sortField] || '';\n      let bVal = b[sortField] || '';\n      \n      if (sortField === 'progress') {\n        aVal = parseFloat(aVal) || 0;\n        bVal = parseFloat(bVal) || 0;\n      }\n      \n      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;\n      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;\n      return 0;\n    });\n    \n    renderRows(filteredRows);\n  }\n  \n  // 検索ボタン\n  container.querySelector('#btn-search').addEventListener('click', performSearch);\n  \n  // 並び替え変更時\n  container.querySelector('#sort-field').addEventListener('change', performSearch);\n  container.querySelector('#sort-order').addEventListener('change', performSearch);\n  \n  // リセットボタン\n  container.querySelector('#btn-reset').addEventListener('click', async () => {\n    container.querySelector('#search-app-name').value = '';\n    container.querySelector('#filter-status').value = '';\n    container.querySelector('#filter-platform').value = '';\n    container.querySelector('#search-assignee').value = '';\n    container.querySelector('#filter-start-date').value = '';\n    container.querySelector('#filter-end-date').value = '';\n    \n    const allRows = await window.aivicApi.list(0);\n    if (allRows) renderRows(allRows);\n  });\n  \n  // CSVエクスポート\n  container.querySelector('#btn-csv-export').addEventListener('click', async () => {\n    const allRows = await window.aivicApi.list(0);\n    if (!allRows) return;\n    \n    const headers = ['アプリ名', 'ステータス', 'プラットフォーム', '担当者', '進捗率', '開始日', '予定終了日', '説明'];\n    const csvContent = '\\uFEFF' + [\n      headers.join(','),\n      ...allRows.map(row => [\n        `\"${(row.app_name || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.status || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.platform || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.assignee || '').replace(/\"/g, '\"\"')}\"`,\n        row.progress || '0',\n        row.start_date || '',\n        row.end_date || '',\n        `\"${(row.description || '').replace(/\"/g, '\"\"')}\"`\n      ].join(','))\n    ].join('\\n');\n    \n    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });\n    const link = document.createElement('a');\n    link.href = URL.createObjectURL(blob);\n    link.download = `app_development_${new Date().toISOString().split('T')[0]}.csv`;\n    link.click();\n  });\n  \n  // 行レベル操作（編集・削除）\n  container.addEventListener('click', async (e) => {\n    const editBtn = e.target.closest('.edit-btn');\n    const deleteBtn = e.target.closest('.delete-btn');\n    const row = e.target.closest('tr[data-id]');\n    \n    if (editBtn) {\n      const id = editBtn.dataset.id;\n      window.showScreen('scr-3', { editId: id });\n    } else if (deleteBtn) {\n      const id = deleteBtn.dataset.id;\n      if (!confirm('このプロジェクトを削除しますか？')) return;\n      \n      await window.aivicApi.delete(0, id);\n      const updatedRows = await window.aivicApi.list(0);\n      if (updatedRows) renderRows(updatedRows);\n    } else if (row && !e.target.closest('button')) {\n      // 行クリックで詳細画面へ\n      const id = row.dataset.id;\n      window.showScreen('scr-3', { viewId: id });\n    }\n  });\n}";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  let currentData = [];\n  let filteredData = [];\n  let currentPage = 1;\n  let itemsPerPage = 20;\n\n  // ステータスバッジのスタイル\n  function getStatusBadge(status) {\n    const styles = {\n      '企画中': 'background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);',\n      '開発中': 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);',\n      'テスト中': 'background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);',\n      'リリース済み': 'background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);',\n      '保守運用': 'background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid rgba(107, 114, 128, 0.3);'\n    };\n    const style = styles[status] || styles['企画中'];\n    return `<span class=\"px-2 py-1 text-xs rounded-full\" style=\"${style}\">${status || '-'}</span>`;\n  }\n\n  // 優先度バッジのスタイル\n  function getPriorityBadge(priority) {\n    const styles = {\n      '高': 'background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);',\n      '中': 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);',\n      '低': 'background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid rgba(107, 114, 128, 0.3);'\n    };\n    const style = styles[priority] || styles['中'];\n    return `<span class=\"px-2 py-1 text-xs rounded-full\" style=\"${style}\">${priority || '-'}</span>`;\n  }\n\n  // 進捗バーの生成\n  function getProgressBar(progress) {\n    const percent = Math.min(100, Math.max(0, progress || 0));\n    const color = percent >= 80 ? '#22c55e' : percent >= 50 ? '#f59e0b' : '#ef4444';\n    return `\n      <div class=\"w-full bg-gray-200 rounded-full h-2\" style=\"background: rgba(255,255,255,0.1);\">\n        <div class=\"h-2 rounded-full\" style=\"width: ${percent}%; background: ${color};\"></div>\n      </div>\n      <span class=\"text-xs mt-1\" style=\"color: var(--text-muted);\">${percent}%</span>\n    `;\n  }\n\n  // テーブル再描画関数\n  function renderRows(rows) {\n    const tbody = container.querySelector('#project-tbody');\n    if (!rows || rows.length === 0) {\n      tbody.innerHTML = `\n        <tr>\n          <td colspan=\"8\" class=\"px-4 py-8 text-center\" style=\"color: var(--text-muted);\">\n            データがありません\n          </td>\n        </tr>\n      `;\n      return;\n    }\n\n    tbody.innerHTML = rows.map(row => `\n      <tr data-id=\"${row.id}\" class=\"border-b cursor-pointer hover:bg-opacity-50\" \n          style=\"border-color: rgba(255,255,255,0.08);\" \n          onmouseover=\"this.style.background='rgba(255,255,255,0.05)'\" \n          onmouseout=\"this.style.background='transparent'\">\n        <td class=\"px-4 py-3\">\n          <div>\n            <div class=\"font-medium text-sm\" style=\"color: var(--text);\">${row.project_name || row.name || '-'}</div>\n            <div class=\"text-xs\" style=\"color: var(--text-muted);\">${row.description || ''}</div>\n          </div>\n        </td>\n        <td class=\"px-4 py-3\">${getStatusBadge(row.status)}</td>\n        <td class=\"px-4 py-3\">${getPriorityBadge(row.priority)}</td>\n        <td class=\"px-4 py-3\">\n          <div class=\"text-sm\" style=\"color: var(--text);\">${row.assignee || row.担当者 || '-'}</div>\n        </td>\n        <td class=\"px-4 py-3\">\n          <div class=\"w-20\">\n            ${getProgressBar(row.progress || row.進捗率)}\n          </div>\n        </td>\n        <td class=\"px-4 py-3\">\n          <div class=\"text-sm\" style=\"color: var(--text);\">${row.start_date || row.開始日 || '-'}</div>\n        </td>\n        <td class=\"px-4 py-3\">\n          <div class=\"text-sm\" style=\"color: var(--text);\">${row.end_date || row.終了予定日 || '-'}</div>\n        </td>\n        <td class=\"px-4 py-3 text-center\">\n          <div class=\"flex items-center justify-center gap-2\">\n            <button class=\"action-btn secondary edit-btn text-xs px-2 py-1\" \n                    data-id=\"${row.id}\"\n                    style=\"background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px;\">\n              編集\n            </button>\n            <button class=\"action-btn secondary delete-btn text-xs px-2 py-1\" \n                    data-id=\"${row.id}\"\n                    style=\"background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px;\">\n              削除\n            </button>\n          </div>\n        </td>\n      </tr>\n    `).join('');\n\n    // 結果件数の更新\n    container.querySelector('#result-count').textContent = rows.length;\n  }\n\n  // 統計情報の更新\n  function updateStats(data) {\n    const stats = {\n      planning: data.filter(r => r.status === '企画中').length,\n      developing: data.filter(r => r.status === '開発中').length,\n      released: data.filter(r => r.status === 'リリース済み').length\n    };\n    \n    container.querySelector('#stat-planning').textContent = stats.planning;\n    container.querySelector('#stat-developing').textContent = stats.developing;\n    container.querySelector('#stat-released').textContent = stats.released;\n  }\n\n  // フィルタリング処理\n  function applyFilters() {\n    const keyword = container.querySelector('#input-search').value.toLowerCase();\n    const status = container.querySelector('#status-filter').value;\n    const priority = container.querySelector('#priority-filter').value;\n    const assignee = container.querySelector('#assignee-filter').value;\n\n    filteredData = currentData.filter(row => {\n      const matchKeyword = !keyword || \n        (row.project_name || row.name || '').toLowerCase().includes(keyword) ||\n        (row.description || '').toLowerCase().includes(keyword);\n      \n      const matchStatus = !status || row.status === status;\n      const matchPriority = !priority || row.priority === priority;\n      const matchAssignee = !assignee || (row.assignee || row.担当者) === assignee;\n\n      return matchKeyword && matchStatus && matchPriority && matchAssignee;\n    });\n\n    // ソート適用\n    applySorting();\n    updateStats(filteredData);\n    renderRows(filteredData);\n  }\n\n  // ソート処理\n  function applySorting() {\n    const sortValue = container.querySelector('#sort-select').value;\n    \n    filteredData.sort((a, b) => {\n      switch(sortValue) {\n        case 'created_desc':\n          return new Date(b.created_at || b.作成日時 || 0) - new Date(a.created_at || a.作成日時 || 0);\n        case 'created_asc':\n          return new Date(a.created_at || a.作成日時 || 0) - new Date(b.created_at || b.作成日時 || 0);\n        case 'name_asc':\n          return (a.project_name || a.name || '').localeCompare(b.project_name || b.name || '');\n        case 'priority_desc':\n          const priorityOrder = { '高': 3, '中': 2, '低': 1 };\n          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);\n        case 'status_asc':\n          return (a.status || '').localeCompare(b.status || '');\n        default:\n          return 0;\n      }\n    });\n  }\n\n  // CSV エクスポート\n  function exportCSV() {\n    const headers = ['プロジェクト名', 'ステータス', '優先度', '担当者', '進捗率', '開始日', '予定終了日', '説明'];\n    const csvContent = [\n      '\\uFEFF' + headers.join(','),\n      ...filteredData.map(row => [\n        `\"${(row.project_name || row.name || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.status || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.priority || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.assignee || row.担当者 || '').replace(/\"/g, '\"\"')}\"`,\n        row.progress || row.進捗率 || 0,\n        `\"${(row.start_date || row.開始日 || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.end_date || row.終了予定日 || '').replace(/\"/g, '\"\"')}\"`,\n        `\"${(row.description || '').replace(/\"/g, '\"\"')}\"`\n      ].join(','))\n    ].join('\\n');\n\n    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });\n    const link = document.createElement('a');\n    link.href = URL.createObjectURL(blob);\n    link.download = `app_development_projects_${new Date().toISOString().split('T')[0]}.csv`;\n    link.click();\n  }\n\n  // 初期データの読み込みと描画\n  if (tables && tables[0] && tables[0].records) {\n    currentData = tables[0].records;\n    filteredData = [...currentData];\n    renderRows(filteredData);\n    updateStats(filteredData);\n  }\n\n  // API からの最新データ取得\n  if (window.aivicApi) {\n    window.aivicApi.list(0).then(rows => {\n      if (rows) {\n        currentData = rows;\n        applyFilters();\n      }\n    });\n  }\n\n  // 検索ボタンのイベントリスナー\n  container.querySelector('#btn-search').addEventListener('click', applyFilters);\n\n  // リセットボタンのイベントリスナー\n  container.querySelector('#btn-reset').addEventListener('click', () => {\n    container.querySelector('#input-search').value = '';\n    container.querySelector('#status-filter').value = '';\n    container.querySelector('#priority-filter').value = '';\n    container.querySelector('#assignee-filter').value = '';\n    applyFilters();\n  });\n\n  // ソート変更のイベントリスナー\n  container.querySelector('#sort-select').addEventListener('change', () => {\n    applySorting();\n    renderRows(filteredData);\n  });\n\n  // CSV エクスポートボタン\n  container.querySelector('#btn-csv-export').addEventListener('click', exportCSV);\n\n  // 新規プロジェクトボタン\n  container.querySelector('#btn-new-project').addEventListener('click', () => {\n    window.showScreen('scr-3');\n  });\n\n  // 行レベル操作のイベントデリゲーション\n  container.addEventListener('click', async (e) => {\n    // 削除ボタン\n    const deleteBtn = e.target.closest('.delete-btn');\n    if (deleteBtn) {\n      if (!confirm('このプロジェクトを削除しますか？')) return;\n      \n      const id = deleteBtn.dataset.id;\n      if (window.aivicApi) {\n        await window.aivicApi.delete(0, id);\n        const rows = await window.aivicApi.list(0);\n        if (rows) {\n          currentData = rows;\n          applyFilters();\n        }\n      }\n      return;\n    }\n\n    // 編集ボタン\n    const editBtn = e.target.closest('.edit-btn');\n    if (editBtn) {\n      window.showScreen('scr-3');\n      return;\n    }\n\n    // 行クリック（詳細表示）\n    const row = e.target.closest('tr[data-id]');\n    if (row && !e.target.closest('button')) {\n      window.showScreen('scr-3');\n    }\n  });\n\n  // Enterキーでの検索\n  container.querySelector('#input-search').addEventListener('keypress', (e) => {\n    if (e.key === 'Enter') {\n      applyFilters();\n    }\n  });\n}";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
   <style>
-    :root {
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --bg-main: #fafafa;
-      --bg-card: #ffffff;
-      --bg-sidebar: #f8fafc;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --text-light: #94a3b8;
-      --top-bar-bg: #ffffff;
-      --top-bar-border: #e2e8f0;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --radius-sm: 4px;
-      --radius-md: 6px;
-      --radius-lg: 8px;
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg-main);
-      color: var(--text);
-      line-height: 1.4;
-      font-size: 14px;
-    }
-
-    .app-layout {
-      display: flex;
-      height: 100vh;
-    }
-
-    .sidebar {
-      width: 240px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-    }
-
-    .sidebar-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .logo {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .logo-icon {
-      width: 24px;
-      height: 24px;
-      background: var(--primary);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .nav-menu {
-      flex: 1;
-      padding: 12px 0;
-    }
-
-    .nav-item {
-      display: block;
-      padding: 8px 20px;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      position: relative;
-    }
-
-    .nav-item:hover {
-      background: rgba(99, 102, 241, 0.08);
-      color: var(--primary);
-    }
-
-    .nav-item.aivic-active {
-      background: rgba(99, 102, 241, 0.12);
-      color: var(--primary);
-      font-weight: 600;
-    }
-
-    .nav-item.aivic-active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: var(--primary);
-    }
-
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .top-bar {
-      background: var(--top-bar-bg);
-      border-bottom: 1px solid var(--top-bar-border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 56px;
-    }
-
-    .page-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 6px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: white;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-    }
-
-    .btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-      border-color: var(--primary-hover);
-      color: white;
-    }
-
-    .content-area {
-      flex: 1;
-      overflow: auto;
-      padding: 20px 24px;
-    }
-
-    /* Dashboard specific styles */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .kpi-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 20px;
-    }
-
-    .kpi-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.2;
-    }
-
-    .kpi-change {
-      font-size: 12px;
-      font-weight: 500;
-      margin-top: 4px;
-    }
-
-    .kpi-change.positive {
-      color: var(--success);
-    }
-
-    .kpi-change.negative {
-      color: var(--danger);
-    }
-
-    /* Table styles */
-    .data-table {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-
-    .table-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .table-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .search-box {
-      padding: 6px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      width: 240px;
-    }
-
-    .search-box:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 12px 20px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    th {
-      background: var(--bg-main);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    td {
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    tr:hover td {
-      background: rgba(99, 102, 241, 0.04);
-    }
-
-    /* Form styles */
-    .form-section {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 16px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .field-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .field-input {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-    }
-
-    .field-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .status-active {
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-    }
-
-    .status-pending {
-      background: rgba(245, 158, 11, 0.1);
-      color: var(--warning);
-    }
-
-    .status-inactive {
-      background: rgba(148, 163, 184, 0.1);
-      color: var(--text-light);
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 200px;
-      }
-      
-      .content-area {
-        padding: 16px;
-      }
-      
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-    }
+:root {
+  --primary: #7a8b9a;
+  --primary-hover: #6a7a88;
+  --bg-main: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-sidebar: #f2f4f6;
+  --border: #e1e5e9;
+  --text: #2c3e50;
+  --text-muted: #546e7a;
+  --top-bar-bg: #ffffff;
+  --top-bar-border: #dee2e6;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg-main); color:var(--text); display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+.top-bar { display:flex; align-items:center; gap:0; background:var(--top-bar-bg, var(--bg-sidebar)); border-bottom:1px solid var(--top-bar-border, var(--border)); padding:0 16px; height:48px; flex-shrink:0; }
+.top-bar .app-name { font-size:14px; font-weight:700; color:var(--text); margin-right:20px; white-space:nowrap; }
+.sys-tab { background:transparent; color:var(--text); opacity:0.6; border:none; border-bottom:2px solid transparent; padding:0 16px; height:48px; cursor:pointer; font-size:13px; white-space:nowrap; transition:color .15s, border-color .15s, opacity .15s; text-decoration:none; display:flex; align-items:center; }
+.sys-tab:hover { opacity:0.85; }
+.sys-tab.active, .sys-tab.aivic-active { color:var(--text); opacity:1; border-bottom-color:var(--primary); font-weight:600; }
+.app-body { display:flex; flex:1; overflow:hidden; }
+.sidebar { width:220px; background:var(--bg-sidebar); border-right:1px solid var(--border); padding:12px 8px; overflow-y:auto; flex-shrink:0; }
+.sidebar-sys-name { margin:0 0 8px; padding:4px 8px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+.nav-btn { display:block; width:100%; text-align:left; background:transparent; color:var(--text); opacity:0.65; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:13px; margin-bottom:2px; transition:opacity .15s,background .15s; text-decoration:none; }
+.nav-btn:hover { background:var(--border); opacity:0.9; }
+.nav-btn.active, .nav-btn.aivic-active { background:var(--primary); color:#fff; opacity:1; }
+.main { flex:1; padding:16px; overflow-y:auto; }
+.card { border:1px solid var(--border); border-radius:12px; padding:16px; background:var(--bg-card); margin-bottom:12px; }
+.hidden { display:none !important; }
+.action-btn { background:var(--primary); color:#fff; border:0; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:13px; }
+.action-btn:hover { background:var(--primary-hover, #1a55ef); }
+.action-btn.secondary { background:var(--border); color:var(--text); }
+.input { background:var(--bg-main); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:7px 10px; font-size:13px; }
+.muted { color:var(--text-muted); font-size:13px; }
+.table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
+table { width:100%; border-collapse:collapse; }
+th, td { border-bottom:1px solid var(--border); padding:8px 10px; text-align:left; font-size:13px; }
+th { color:var(--text); background:var(--bg-sidebar); position:sticky; top:0; font-weight:600; }
+tr:hover { background:var(--bg-sidebar); cursor:pointer; }
+canvas { display:block; max-height:280px !important; }
+.chart-wrap, .chart-container, [class*="chart"] { position:relative; height:260px; max-height:280px; }
+@media (max-width:768px) {
+  .top-bar { overflow-x:auto; }
+  .app-body { flex-direction:column; }
+  .sidebar { width:100%; height:auto; display:flex; flex-wrap:wrap; gap:4px; padding:8px; }
+  .sidebar-sys-name { display:none; }
+  .nav-btn { width:auto; border-radius:999px; padding:5px 12px; }
+}
   </style>
 </head>
 <body>
-  <div class="app-layout">
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">
-          <div class="logo-icon">MA</div>
-          会員アプリ管理
-        </div>
-      </div>
-      
-      <div class="nav-menu">
-        <button class="nav-item" data-aivic-nav="scr-1" onclick="showScreen('scr-1')">
-          📊 ダッシュボード
-        </button>
-        <button class="nav-item" data-aivic-nav="scr-2" onclick="showScreen('scr-2')">
-          📋 データ一覧
-        </button>
-        <button class="nav-item" data-aivic-nav="scr-3" onclick="showScreen('scr-3')">
-          📝 詳細・編集
-        </button>
-        <button class="nav-item" data-aivic-nav="scr-4" onclick="showScreen('scr-4')">
-          ⚙️ 設定
-        </button>
-      </div>
-      
-      <div style="padding: 16px 20px; border-top: 1px solid var(--border); margin-top: auto;">
-        <a href="./login.html" class="btn" style="width: 100%; justify-content: center;">
-          ログアウト
-        </a>
-      </div>
-    </nav>
-
-    <main class="main-content">
-      <header class="top-bar">
-        <h1 class="page-title" id="current-page-title">ダッシュボード</h1>
-        <div class="top-actions">
-          <button class="btn">
-            📤 エクスポート
-          </button>
-          <button class="btn btn-primary">
-            ➕ 新規作成
-          </button>
-        </div>
-      </header>
-
-      <div class="content-area">
-        <div data-aivic-panel="scr-1" style="display:none"></div>
-              <div class="kpi-value">12,847</div>
-              <div class="kpi-change positive">+2.3% 前月比</div>
-            </div>
-            <div class="kpi-card">
-              <div class="kpi-label">アクティブユーザー</div>
-              <div class="kpi-value">8,923</div>
-              <div class="kpi-change positive">+5.1% 前月比</div>
-            </div>
-            <div class="kpi-card">
-              <div class="kpi-label">新規登録</div>
-              <div class="kpi-value">342</div>
-              <div class="kpi-change negative">-1.2% 前月比</div>
-            </div>
-            <div class="kpi-card">
-              <div class="kpi-label">アプリ評価</div>
-              <div class="kpi-value">4.6</div>
-              <div class="kpi-change positive">+0.1 前月比</div>
-            </div>
-          </div>
-
-          <div class="data-table">
-            <div class="table-header">
-              <h2 class="table-title">最近のアクティビティ</h2>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>時刻</th>
-                  <th>ユーザー</th>
-                  <th>アクション</th>
-                  <th>ステータス</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>14:32</td>
-                  <td>田中太郎</td>
-                  <td>プロフィール更新</td>
-                  <td><span class="status-badge status-active">完了</span></td>
-                </tr>
-                <tr>
-                  <td>14:28</td>
-                  <td>佐藤花子</td>
-                  <td>新規登録</td>
-                  <td><span class="status-badge status-pending">承認待ち</span></td>
-                </tr>
-                <tr>
-                  <td>14:15</td>
-                  <td>山田次郎</td>
-                  <td>パスワード変更</td>
-                  <td><span class="status-badge status-active">完了</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div data-aivic-panel="scr-2" style="display:block"><div class="flex h-full">
+<header class="top-bar">
+  <span class="app-name">会員向けアプリの開発</span>
+    <a href="./scr-1.html" class="sys-tab" data-aivic-nav-system="sys-1780464114264">会員向けアプリの開発</a>
+    <a href="./scr-1.html" class="sys-tab active" data-aivic-nav-system="sys-1780464322322">会員向けアプリの開発</a>
+</header>
+<div class="app-body">
+  <aside class="sidebar">
+    <p class="sidebar-sys-name">会員向けアプリの開発</p>
+      <a href="./scr-1.html" class="nav-btn" data-aivic-nav="scr-1">会員向けアプリの開発ダッシュボード</a>
+      <a href="./scr-2.html" class="nav-btn active" data-aivic-nav="scr-2">会員向けアプリの開発データ一覧</a>
+      <a href="./scr-3.html" class="nav-btn" data-aivic-nav="scr-3">会員向けアプリの開発詳細・編集</a>
+      <a href="./scr-4.html" class="nav-btn" data-aivic-nav="scr-4">会員向けアプリの開発設定</a>
+  </aside>
+  <main class="main">
+    <section class="card" data-aivic-panel="scr-2" style="margin-top:0">
+<div class="flex h-full">
   <!-- 検索・フィルタサイドバー -->
-  <div class="w-80 bg-[var(--bg-sidebar)] border-r border-[var(--border)] p-4 flex flex-col">
-    <h2 class="text-lg font-semibold text-[var(--text)] mb-4">検索・フィルタ</h2>
-    
-    <!-- 検索条件フォーム -->
-    <div class="space-y-3 mb-6">
-      <div>
-        <label class="block text-sm text-[var(--text-muted)] mb-1">アプリ名</label>
+  <div class="w-80 border-r" style="background: var(--bg-sidebar); border-color: rgba(255,255,255,0.12);">
+    <div class="p-4 border-b" style="border-color: rgba(255,255,255,0.12);">
+      <h2 class="text-lg font-semibold mb-3" style="color: var(--text);">検索・フィルタ</h2>
+      
+      <!-- キーワード検索 -->
+      <div class="mb-4">
+        <label class="block text-sm mb-1" style="color: var(--text-muted);">キーワード</label>
         <input 
           type="text" 
-          id="search-app-name" 
-          data-testid="app-name-search"
-          class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.08)]"
-          placeholder="アプリ名で検索"
+          id="input-search" 
+          data-testid="keyword-search"
+          placeholder="アプリ名、機能名で検索"
+          class="w-full px-3 py-2 text-sm rounded-md"
+          style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
         />
       </div>
-      
-      <div>
-        <label class="block text-sm text-[var(--text-muted)] mb-1">開発ステータス</label>
+
+      <!-- ステータス -->
+      <div class="mb-4">
+        <label class="block text-sm mb-1" style="color: var(--text-muted);">開発ステータス</label>
         <select 
-          id="filter-status" 
+          id="status-filter" 
           data-testid="status-filter"
-          class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
+          class="w-full px-3 py-2 text-sm rounded-md"
+          style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
         >
           <option value="">すべて</option>
           <option value="企画中">企画中</option>
           <option value="開発中">開発中</option>
           <option value="テスト中">テスト中</option>
           <option value="リリース済み">リリース済み</option>
-          <option value="保守中">保守中</option>
+          <option value="保守運用">保守運用</option>
         </select>
       </div>
-      
-      <div>
-        <label class="block text-sm text-[var(--text-muted)] mb-1">プラットフォーム</label>
+
+      <!-- 優先度 -->
+      <div class="mb-4">
+        <label class="block text-sm mb-1" style="color: var(--text-muted);">優先度</label>
         <select 
-          id="filter-platform" 
-          data-testid="platform-filter"
-          class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
+          id="priority-filter" 
+          data-testid="priority-filter"
+          class="w-full px-3 py-2 text-sm rounded-md"
+          style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
         >
           <option value="">すべて</option>
-          <option value="iOS">iOS</option>
-          <option value="Android">Android</option>
-          <option value="Web">Web</option>
-          <option value="クロスプラットフォーム">クロスプラットフォーム</option>
+          <option value="高">高</option>
+          <option value="中">中</option>
+          <option value="低">低</option>
         </select>
       </div>
-      
-      <div>
-        <label class="block text-sm text-[var(--text-muted)] mb-1">担当者</label>
-        <input 
-          type="text" 
-          id="search-assignee" 
-          data-testid="assignee-search"
-          class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
-          placeholder="担当者名"
-        />
+
+      <!-- 担当者 -->
+      <div class="mb-4">
+        <label class="block text-sm mb-1" style="color: var(--text-muted);">担当者</label>
+        <select 
+          id="assignee-filter" 
+          data-testid="assignee-filter"
+          class="w-full px-3 py-2 text-sm rounded-md"
+          style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
+        >
+          <option value="">すべて</option>
+          <option value="田中太郎">田中太郎</option>
+          <option value="佐藤花子">佐藤花子</option>
+          <option value="鈴木一郎">鈴木一郎</option>
+          <option value="山田美咲">山田美咲</option>
+        </select>
       </div>
-      
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-sm text-[var(--text-muted)] mb-1">開始日（以降）</label>
-          <input 
-            type="date" 
-            id="filter-start-date" 
-            data-testid="start-date-filter"
-            class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
-          />
-        </div>
-        <div>
-          <label class="block text-sm text-[var(--text-muted)] mb-1">終了日（以前）</label>
-          <input 
-            type="date" 
-            id="filter-end-date" 
-            data-testid="end-date-filter"
-            class="w-full px-3 py-2 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
-          />
-        </div>
-      </div>
-    </div>
-    
-    <!-- 検索・リセットボタン -->
-    <div class="space-y-2 mb-6">
+
+      <!-- 検索ボタン -->
       <button 
         id="btn-search" 
         data-testid="search-button"
-        class="w-full bg-[var(--primary)] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[var(--primary-hover)] transition-colors"
+        class="action-btn w-full mb-3"
+        style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px;"
       >
         検索実行
       </button>
+
+      <!-- リセットボタン -->
       <button 
         id="btn-reset" 
         data-testid="reset-button"
-        class="w-full bg-transparent border border-rgba(255,255,255,0.18) text-[var(--text)] px-4 py-2 rounded text-sm hover:bg-rgba(255,255,255,0.05) transition-colors"
+        class="action-btn secondary w-full"
+        style="background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 6px; font-size: 14px;"
       >
         条件リセット
       </button>
     </div>
-    
-    <!-- 統計情報 -->
-    <div class="mt-auto">
-      <div class="bg-[var(--bg-card)] p-3 rounded border border-[var(--border)]">
-        <h3 class="text-sm font-medium text-[var(--text)] mb-2">統計情報</h3>
-        <div class="space-y-1 text-xs text-[var(--text-muted)]">
-          <div class="flex justify-between">
-            <span>総件数:</span>
-            <span id="stat-total">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span>開発中:</span>
-            <span id="stat-developing">0</span>
-          </div>
-          <div class="flex justify-between">
-            <span>リリース済み:</span>
-            <span id="stat-released">0</span>
-          </div>
+
+    <!-- クイック統計 -->
+    <div class="p-4">
+      <h3 class="text-sm font-medium mb-3" style="color: var(--text);">開発状況</h3>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span style="color: var(--text-muted);">企画中</span>
+          <span id="stat-planning" style="color: var(--text);">-</span>
+        </div>
+        <div class="flex justify-between">
+          <span style="color: var(--text-muted);">開発中</span>
+          <span id="stat-developing" style="color: var(--text);">-</span>
+        </div>
+        <div class="flex justify-between">
+          <span style="color: var(--text-muted);">リリース済み</span>
+          <span id="stat-released" style="color: var(--text);">-</span>
         </div>
       </div>
     </div>
   </div>
-  
+
   <!-- メインコンテンツエリア -->
   <div class="flex-1 flex flex-col">
     <!-- ヘッダーバー -->
-    <div class="bg-[var(--bg-card)] border-b border-[var(--border)] p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-semibold text-[var(--text)]">会員向けアプリ開発データ一覧</h1>
-          <p class="text-sm text-[var(--text-muted)] mt-1">開発プロジェクトの検索・管理</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button 
-            id="btn-csv-export" 
-            data-testid="csv-export-button"
-            class="bg-transparent border border-rgba(255,255,255,0.18) text-[var(--text)] px-4 py-2 rounded text-sm hover:bg-rgba(255,255,255,0.05) transition-colors"
-          >
-            CSV出力
-          </button>
-          <button 
-            id="btn-new-project" 
-            data-testid="new-project-button"
-            class="bg-[var(--primary)] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[var(--primary-hover)] transition-colors"
-            onclick="window.showScreen('scr-3')"
-          >
-            新規プロジェクト
-          </button>
-        </div>
+    <div class="p-4 border-b flex items-center justify-between" style="background: var(--bg-main); border-color: rgba(255,255,255,0.12);">
+      <div>
+        <h1 class="text-xl font-bold mb-1" style="color: var(--text);">会員向けアプリ開発データ一覧</h1>
+        <p class="text-sm" style="color: var(--text-muted);">開発プロジェクトの進捗管理と詳細確認</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button 
+          id="btn-csv-export" 
+          data-testid="csv-export-button"
+          class="action-btn secondary"
+          style="background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 6px; font-size: 14px;"
+        >
+          CSV出力
+        </button>
+        <button 
+          id="btn-new-project" 
+          data-testid="new-project-button"
+          class="action-btn"
+          style="background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px;"
+        >
+          新規プロジェクト
+        </button>
       </div>
     </div>
-    
-    <!-- 並び替えコントロール -->
-    <div class="bg-[var(--bg-main)] border-b border-[var(--border)] px-4 py-3">
+
+    <!-- ソート・表示設定バー -->
+    <div class="p-3 border-b flex items-center justify-between" style="background: var(--bg-card); border-color: rgba(255,255,255,0.12);">
       <div class="flex items-center gap-4">
-        <span class="text-sm text-[var(--text-muted)]">並び替え:</span>
-        <select 
-          id="sort-field" 
-          data-testid="sort-field-select"
-          class="px-3 py-1 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
-        >
-          <option value="created_at">作成日時</option>
-          <option value="app_name">アプリ名</option>
-          <option value="status">ステータス</option>
-          <option value="start_date">開始日</option>
-          <option value="progress">進捗率</option>
-        </select>
-        <select 
-          id="sort-order" 
-          data-testid="sort-order-select"
-          class="px-3 py-1 bg-rgba(0,0,0,0.25) border border-rgba(255,255,255,0.18) rounded text-[var(--text)] text-sm focus:outline-none focus:border-[var(--primary)]"
-        >
-          <option value="desc">降順</option>
-          <option value="asc">昇順</option>
-        </select>
-        <span class="text-sm text-[var(--text-muted)] ml-auto">
-          検索結果: <span id="result-count">0</span> 件
-        </span>
+        <div class="flex items-center gap-2">
+          <label class="text-sm" style="color: var(--text-muted);">並び順:</label>
+          <select 
+            id="sort-select" 
+            data-testid="sort-select"
+            class="px-2 py-1 text-sm rounded"
+            style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
+          >
+            <option value="created_desc">作成日時（新しい順）</option>
+            <option value="created_asc">作成日時（古い順）</option>
+            <option value="name_asc">プロジェクト名（昇順）</option>
+            <option value="priority_desc">優先度（高い順）</option>
+            <option value="status_asc">ステータス順</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm" style="color: var(--text-muted);">表示件数:</label>
+          <select 
+            id="limit-select" 
+            data-testid="limit-select"
+            class="px-2 py-1 text-sm rounded"
+            style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);"
+          >
+            <option value="20">20件</option>
+            <option value="50">50件</option>
+            <option value="100">100件</option>
+          </select>
+        </div>
+      </div>
+      <div class="text-sm" style="color: var(--text-muted);">
+        <span id="result-count">0</span> 件のプロジェクト
       </div>
     </div>
-    
+
     <!-- データテーブル -->
     <div class="flex-1 overflow-auto">
       <div class="table-wrap">
-        <table data-testid="app-development-list" class="w-full">
+        <table data-testid="project-list" class="w-full">
           <thead>
-            <tr class="bg-[var(--bg-card)] border-b border-[var(--border)]">
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">アプリ名</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">ステータス</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">プラットフォーム</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">担当者</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">進捗</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">開始日</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">予定終了日</th>
-              <th class="text-left px-4 py-3 text-sm font-medium text-[var(--text)]">操作</th>
+            <tr style="background: var(--bg-card);">
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">プロジェクト名</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">ステータス</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">優先度</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">担当者</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">進捗率</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">開始日</th>
+              <th class="px-4 py-3 text-left text-sm font-medium" style="color: var(--text);">予定終了日</th>
+              <th class="px-4 py-3 text-center text-sm font-medium" style="color: var(--text);">操作</th>
             </tr>
           </thead>
-          <tbody id="app-development-tbody">
-            <!-- データ行はJSで動的生成 -->
+          <tbody id="project-tbody">
+            <!-- データは initJs で動的に生成 -->
           </tbody>
         </table>
       </div>
     </div>
-  </div>
-</div></button>
-                <button class="btn">📊 フィルター</button>
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>会員名</th>
-                  <th>メールアドレス</th>
-                  <th>登録日</th>
-                  <th>最終ログイン</th>
-                  <th>ステータス</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>#001</td>
-                  <td>田中太郎</td>
-                  <td>tanaka@example.com</td>
-                  <td>2024-01-15</td>
-                  <td>2024-01-20 14:32</td>
-                  <td><span class="status-badge status-active">アクティブ</span></td>
-                  <td>
-                    <button class="btn" style="padding: 4px 8px; font-size: 12px;">編集</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>#002</td>
-                  <td>佐藤花子</td>
-                  <td>sato@example.com</td>
-                  <td>2024-01-18</td>
-                  <td>2024-01-19 09:15</td>
-                  <td><span class="status-badge status-pending">承認待ち</span></td>
-                  <td>
-                    <button class="btn" style="padding: 4px 8px; font-size: 12px;">編集</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        <div data-aivic-panel="scr-3" style="display:none"></label>
-                <input type="text" class="field-input" value="#001" readonly>
-              </div>
-              <div class="form-field">
-                <label class="field-label">会員名</label>
-                <input type="text" class="field-input" value="田中太郎">
-              </div>
-              <div class="form-field">
-                <label class="field-label">メールアドレス</label>
-                <input type="email" class="field-input" value="tanaka@example.com">
-              </div>
-              <div class="form-field">
-                <label class="field-label">電話番号</label>
-                <input type="tel" class="field-input" value="090-1234-5678">
-              </div>
-              <div class="form-field">
-                <label class="field-label">登録日</label>
-                <input type="date" class="field-input" value="2024-01-15">
-              </div>
-              <div class="form-field">
-                <label class="field-label">ステータス</label>
-                <select class="field-input">
-                  <option value="active">アクティブ</option>
-                  <option value="pending">承認待ち</option>
-                  <option value="inactive">非アクティブ</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h2 class="section-title">アプリ利用状況</h2>
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">最終ログイン</label>
-                <input type="datetime-local" class="field-input" value="2024-01-20T14:32">
-              </div>
-              <div class="form-field">
-                <label class="field-label">ログイン回数</label>
-                <input type="number" class="field-input" value="47" readonly>
-              </div>
-              <div class="form-field">
-                <label class="field-label">利用開始日</label>
-                <input type="date" class="field-input" value="2024-01-15" readonly>
-              </div>
-              <div class="form-field">
-                <label class="field-label">プラン</label>
-                <select class="field-input">
-                  <option value="basic">ベーシック</option>
-                  <option value="premium">プレミアム</option>
-                  <option value="enterprise">エンタープライズ</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 12px; justify-content: flex-end;">
-            <button class="btn">キャンセル</button>
-            <button class="btn btn-primary">保存</button>
-          </div>
-        </div>
-
-        <div data-aivic-panel="scr-4" style="display:none"></label>
-                <input type="text" class="field-input" value="会員向けアプリ">
-              </div>
-              <div class="form-field">
-                <label class="field-label">バージョン</label>
-                <input type="text" class="field-input" value="1.2.3">
-              </div>
-              <div class="form-field">
-                <label class="field-label">メンテナンスモード</label>
-                <select class="field-input">
-                  <option value="off">無効</option>
-                  <option value="on">有効</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label class="field-label">新規登録</label>
-                <select class="field-input">
-                  <option value="open">オープン</option>
-                  <option value="approval">承認制</option>
-                  <option value="closed">停止中</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h2 class="section-title">通知設定</h2>
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">メール通知</label>
-                <select class="field-input">
-                  <option value="enabled">有効</option>
-                  <option value="disabled">無効</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label class="field-label">プッシュ通知</label>
-                <select class="field-input">
-                  <option value="enabled">有効</option>
-                  <option value="disabled">無効</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label class="field-label">通知頻度</label>
-                <select class="field-input">
-                  <option value="realtime">リアルタイム</option>
-                  <option value="hourly">1時間ごと</option>
-                  <option value="daily">1日1回</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h2 class="section-title">セキュリティ設定</h2>
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">パスワード有効期限（日）</label>
-                <input type="number" class="field-input" value="90">
-              </div>
-              <div class="form-field">
-                <label class="field-label">ログイン試行回数上限</label>
-                <input type="number" class="field-input" value="5">
-              </div>
-              <div class="form-field">
-                <label class="field-label">セッション有効期限（分）</label>
-                <input type="number" class="field-input" value="120">
-              </div>
-              <div class="form-field">
-                <label class="field-label">二要素認証</label>
-                <select class="field-input">
-                  <option value="optional">任意</option>
-                  <option value="required">必須</option>
-                  <option value="disabled">無効</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 12px; justify-content: flex-end;">
-            <button class="btn">リセット</button>
-            <button class="btn btn-primary">設定を保存</button>
-          </div>
-        </div>
+    <!-- ページネーション -->
+    <div class="p-4 border-t flex items-center justify-between" style="background: var(--bg-card); border-color: rgba(255,255,255,0.12);">
+      <button 
+        id="btn-prev-page" 
+        data-testid="prev-page-button"
+        class="action-btn secondary"
+        style="background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.18); padding: 6px 12px; border-radius: 6px; font-size: 14px;"
+        disabled
+      >
+        前のページ
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="text-sm" style="color: var(--text-muted);">ページ</span>
+        <span id="current-page" class="text-sm font-medium" style="color: var(--text);">1</span>
+        <span class="text-sm" style="color: var(--text-muted);">/ </span>
+        <span id="total-pages" class="text-sm font-medium" style="color: var(--text);">1</span>
       </div>
-    </main>
+      <button 
+        id="btn-next-page" 
+        data-testid="next-page-button"
+        class="action-btn secondary"
+        style="background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.18); padding: 6px 12px; border-radius: 6px; font-size: 14px;"
+        disabled
+      >
+        次のページ
+      </button>
+    </div>
   </div>
-
-  <script>
-    function showScreen(screenId) {
-      // Update page title
-      const titles = {
-        'scr-1': 'ダッシュボード',
-        'scr-2': 'データ一覧', 
-        'scr-3': '詳細・編集',
-        'scr-4': '設定'
-      };
-      
-      const titleEl = document.getElementById('current-page-title');
-      if (titleEl && titles[screenId]) {
-        titleEl.textContent = titles[screenId];
-      }
-    }
-  </script>
-
-  <script>
+</div>
+    </section>
+  </main>
+</div>
+<script>
 (function() {
   var TABLE_DEFS = window.AIVIC_TABLES || [];
   var PRESET_SEED = window.AIVIC_PRESET_SEED || {};
