@@ -11,28 +11,30 @@ export interface Permission {
   action: 'create' | 'read' | 'update' | 'delete' | 'bulk';
 }
 
-const rolePermissions: Record<Role, Permission[]> = {
+const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   admin: [
-    { resource: 'resources', action: 'create' },
-    { resource: 'resources', action: 'read' },
-    { resource: 'resources', action: 'update' },
-    { resource: 'resources', action: 'delete' },
-    { resource: 'resources', action: 'bulk' }
+    { resource: '*', action: 'create' },
+    { resource: '*', action: 'read' },
+    { resource: '*', action: 'update' },
+    { resource: '*', action: 'delete' },
+    { resource: '*', action: 'bulk' }
   ],
   operator: [
-    { resource: 'resources', action: 'create' },
-    { resource: 'resources', action: 'read' },
-    { resource: 'resources', action: 'update' },
-    { resource: 'resources', action: 'bulk' }
+    { resource: '*', action: 'create' },
+    { resource: '*', action: 'read' },
+    { resource: '*', action: 'update' },
+    { resource: '*', action: 'bulk' }
   ],
   viewer: [
-    { resource: 'resources', action: 'read' }
+    { resource: '*', action: 'read' }
   ]
 };
 
-export function hasPermission(role: Role, resource: string, action: string): boolean {
-  const permissions = rolePermissions[role] || [];
-  return permissions.some(p => p.resource === resource && p.action === action);
+export function hasPermission(user: User, resource: string, action: Permission['action']): boolean {
+  const permissions = ROLE_PERMISSIONS[user.role] || [];
+  return permissions.some(p => 
+    (p.resource === '*' || p.resource === resource) && p.action === action
+  );
 }
 
 export function extractUserFromEvent(event: any): User | null {
@@ -41,12 +43,12 @@ export function extractUserFromEvent(event: any): User | null {
     if (!authHeader) return null;
     
     const token = authHeader.replace('Bearer ', '');
-    const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     
     return {
-      id: decoded.sub || decoded.userId || 'unknown',
-      role: decoded.role || 'viewer',
-      email: decoded.email
+      id: payload.sub || payload.userId || 'unknown',
+      role: payload.role || 'viewer',
+      email: payload.email
     };
   } catch {
     return null;
