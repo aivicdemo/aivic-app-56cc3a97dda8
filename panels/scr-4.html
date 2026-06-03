@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会員向けアプリ開発管理システム</title>
+  
+  <script>
+window.AIVIC_API_URL = "https://mkwmoife37uqyv4zhy4yhweozq0oddxn.lambda-url.us-east-1.on.aws/";
+window.AIVIC_APP_ID = "session-1780371834361";
+window.AIVIC_SYSTEM_NAME = "会員向けアプリの開発";
+window.AIVIC_TABLES = [];
+window.AIVIC_PRESET_SEED = {};
+window.AIVIC_PAGE_SCREEN_ID = "scr-4";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-main: #fafafa;
+      --bg-card: #ffffff;
+      --bg-sidebar: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --top-bar-bg: #ffffff;
+      --top-bar-border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-main);
+      color: var(--text);
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .nav-menu {
+      flex: 1;
+      padding: 12px 0;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 8px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: rgba(99, 102, 241, 0.08);
+      color: var(--primary);
+    }
+
+    .nav-item.aivic-active {
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .nav-item.aivic-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--primary);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      background: var(--top-bar-bg);
+      border-bottom: 1px solid var(--top-bar-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: white;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: white;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      padding: 20px 24px;
+    }
+
+    /* Dashboard specific styles */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .kpi-change {
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .kpi-change.positive {
+      color: var(--success);
+    }
+
+    .kpi-change.negative {
+      color: var(--danger);
+    }
+
+    /* Table styles */
+    .data-table {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .search-box {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      width: 240px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-main);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    tr:hover td {
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    /* Form styles */
+    .form-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .field-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-active {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .status-pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    .status-inactive {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-light);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+      }
+      
+      .content-area {
+        padding: 16px;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">MA</div>
+          会員アプリ管理
+        </div>
+      </div>
+      
+      <div class="nav-menu">
+        <button class="nav-item" data-aivic-nav="scr-1" onclick="showScreen('scr-1')">
+          📊 ダッシュボード
+        </button>
+        <button class="nav-item" data-aivic-nav="scr-2" onclick="showScreen('scr-2')">
+          📋 データ一覧
+        </button>
+        <button class="nav-item" data-aivic-nav="scr-3" onclick="showScreen('scr-3')">
+          📝 詳細・編集
+        </button>
+        <button class="nav-item" data-aivic-nav="scr-4" onclick="showScreen('scr-4')">
+          ⚙️ 設定
+        </button>
+      </div>
+      
+      <div style="padding: 16px 20px; border-top: 1px solid var(--border); margin-top: auto;">
+        <a href="./login.html" class="btn" style="width: 100%; justify-content: center;">
+          ログアウト
+        </a>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1 class="page-title" id="current-page-title">ダッシュボード</h1>
+        <div class="top-actions">
+          <button class="btn">
+            📤 エクスポート
+          </button>
+          <button class="btn btn-primary">
+            ➕ 新規作成
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div data-aivic-panel="scr-1" style="display:none"></div>
+              <div class="kpi-value">12,847</div>
+              <div class="kpi-change positive">+2.3% 前月比</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">アクティブユーザー</div>
+              <div class="kpi-value">8,923</div>
+              <div class="kpi-change positive">+5.1% 前月比</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">新規登録</div>
+              <div class="kpi-value">342</div>
+              <div class="kpi-change negative">-1.2% 前月比</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">アプリ評価</div>
+              <div class="kpi-value">4.6</div>
+              <div class="kpi-change positive">+0.1 前月比</div>
+            </div>
+          </div>
+
+          <div class="data-table">
+            <div class="table-header">
+              <h2 class="table-title">最近のアクティビティ</h2>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>時刻</th>
+                  <th>ユーザー</th>
+                  <th>アクション</th>
+                  <th>ステータス</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>14:32</td>
+                  <td>田中太郎</td>
+                  <td>プロフィール更新</td>
+                  <td><span class="status-badge status-active">完了</span></td>
+                </tr>
+                <tr>
+                  <td>14:28</td>
+                  <td>佐藤花子</td>
+                  <td>新規登録</td>
+                  <td><span class="status-badge status-pending">承認待ち</span></td>
+                </tr>
+                <tr>
+                  <td>14:15</td>
+                  <td>山田次郎</td>
+                  <td>パスワード変更</td>
+                  <td><span class="status-badge status-active">完了</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div data-aivic-panel="scr-2" style="display:none"></button>
+                <button class="btn">📊 フィルター</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>会員名</th>
+                  <th>メールアドレス</th>
+                  <th>登録日</th>
+                  <th>最終ログイン</th>
+                  <th>ステータス</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>#001</td>
+                  <td>田中太郎</td>
+                  <td>tanaka@example.com</td>
+                  <td>2024-01-15</td>
+                  <td>2024-01-20 14:32</td>
+                  <td><span class="status-badge status-active">アクティブ</span></td>
+                  <td>
+                    <button class="btn" style="padding: 4px 8px; font-size: 12px;">編集</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>#002</td>
+                  <td>佐藤花子</td>
+                  <td>sato@example.com</td>
+                  <td>2024-01-18</td>
+                  <td>2024-01-19 09:15</td>
+                  <td><span class="status-badge status-pending">承認待ち</span></td>
+                  <td>
+                    <button class="btn" style="padding: 4px 8px; font-size: 12px;">編集</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div data-aivic-panel="scr-3" style="display:none"></label>
+                <input type="text" class="field-input" value="#001" readonly>
+              </div>
+              <div class="form-field">
+                <label class="field-label">会員名</label>
+                <input type="text" class="field-input" value="田中太郎">
+              </div>
+              <div class="form-field">
+                <label class="field-label">メールアドレス</label>
+                <input type="email" class="field-input" value="tanaka@example.com">
+              </div>
+              <div class="form-field">
+                <label class="field-label">電話番号</label>
+                <input type="tel" class="field-input" value="090-1234-5678">
+              </div>
+              <div class="form-field">
+                <label class="field-label">登録日</label>
+                <input type="date" class="field-input" value="2024-01-15">
+              </div>
+              <div class="form-field">
+                <label class="field-label">ステータス</label>
+                <select class="field-input">
+                  <option value="active">アクティブ</option>
+                  <option value="pending">承認待ち</option>
+                  <option value="inactive">非アクティブ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="section-title">アプリ利用状況</h2>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">最終ログイン</label>
+                <input type="datetime-local" class="field-input" value="2024-01-20T14:32">
+              </div>
+              <div class="form-field">
+                <label class="field-label">ログイン回数</label>
+                <input type="number" class="field-input" value="47" readonly>
+              </div>
+              <div class="form-field">
+                <label class="field-label">利用開始日</label>
+                <input type="date" class="field-input" value="2024-01-15" readonly>
+              </div>
+              <div class="form-field">
+                <label class="field-label">プラン</label>
+                <select class="field-input">
+                  <option value="basic">ベーシック</option>
+                  <option value="premium">プレミアム</option>
+                  <option value="enterprise">エンタープライズ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn">キャンセル</button>
+            <button class="btn btn-primary">保存</button>
+          </div>
+        </div>
+
+        <div data-aivic-panel="scr-4" style="display:block"><div class="p-4">
+  <!-- ヘッダー -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-xl font-semibold" style="color: var(--text);">アプリ開発設定</h1>
+      <p class="text-sm mt-1" style="color: var(--text-muted);">会員向けアプリの運用設定を管理します</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="action-btn secondary" data-testid="dashboard-button" onclick="window.showScreen('scr-1')">
+        ダッシュボード
+      </button>
+      <button class="action-btn secondary" data-testid="data-list-button" onclick="window.showScreen('scr-2')">
+        データ一覧
+      </button>
+    </div>
+  </div>
+
+  <!-- タブナビゲーション -->
+  <div class="mb-6">
+    <div class="flex border-b" style="border-color: rgba(255,255,255,0.12);">
+      <button class="tab-btn active px-4 py-2 text-sm font-medium border-b-2" data-tab="permissions" data-testid="permissions-tab" style="border-color: var(--primary); color: var(--primary);">
+        権限設定
+      </button>
+      <button class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent" data-tab="notifications" data-testid="notifications-tab" style="color: var(--text-muted);">
+        通知設定
+      </button>
+      <button class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent" data-tab="master" data-testid="master-tab" style="color: var(--text-muted);">
+        マスタ設定
+      </button>
+      <button class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent" data-tab="audit" data-testid="audit-tab" style="color: var(--text-muted);">
+        監査ログ
+      </button>
+    </div>
+  </div>
+
+  <!-- 権限設定タブ -->
+  <div id="permissions-panel" class="tab-panel">
+    <div class="grid grid-cols-2 gap-6">
+      <!-- 権限管理フォーム -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">ユーザー権限設定</h3>
+        <form class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">ユーザーID</label>
+            <input type="text" name="userId" data-testid="user-id-input" class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);" 
+                   placeholder="ユーザーIDを入力">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">権限レベル</label>
+            <select name="permissionLevel" data-testid="permission-level-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="">選択してください</option>
+              <option value="admin">管理者</option>
+              <option value="editor">編集者</option>
+              <option value="viewer">閲覧者</option>
+              <option value="guest">ゲスト</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">アクセス範囲</label>
+            <select name="accessScope" data-testid="access-scope-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="">選択してください</option>
+              <option value="all">全体</option>
+              <option value="department">部署内</option>
+              <option value="team">チーム内</option>
+              <option value="personal">個人</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="api-access" name="apiAccess" data-testid="api-access-checkbox" style="accent-color: var(--primary);">
+            <label for="api-access" class="text-sm" style="color: var(--text);">API アクセス許可</label>
+          </div>
+          <button type="button" class="action-btn w-full" data-testid="save-permission-button">
+            権限を設定
+          </button>
+        </form>
+      </div>
+
+      <!-- 権限一覧 -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-medium" style="color: var(--text);">設定済み権限</h3>
+          <input type="text" id="permission-search" data-testid="permission-search" placeholder="ユーザー検索" 
+                 class="px-3 py-1 text-sm rounded border w-32" 
+                 style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+        </div>
+        <div class="table-wrap">
+          <table data-testid="permissions-list">
+            <thead>
+              <tr>
+                <th style="color: var(--text);">ユーザー</th>
+                <th style="color: var(--text);">権限</th>
+                <th style="color: var(--text);">操作</th>
+              </tr>
+            </thead>
+            <tbody id="permissions-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知設定タブ -->
+  <div id="notifications-panel" class="tab-panel hidden">
+    <div class="grid grid-cols-2 gap-6">
+      <!-- 通知設定フォーム -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">通知設定</h3>
+        <form class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">通知タイプ</label>
+            <select name="notificationType" data-testid="notification-type-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="">選択してください</option>
+              <option value="email">メール通知</option>
+              <option value="push">プッシュ通知</option>
+              <option value="sms">SMS通知</option>
+              <option value="webhook">Webhook</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">イベント</label>
+            <select name="eventType" data-testid="event-type-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="">選択してください</option>
+              <option value="user_register">ユーザー登録</option>
+              <option value="data_update">データ更新</option>
+              <option value="system_error">システムエラー</option>
+              <option value="maintenance">メンテナンス</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">送信先</label>
+            <input type="text" name="recipient" data-testid="recipient-input" class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);" 
+                   placeholder="メールアドレスまたはURL">
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="notification-enabled" name="enabled" data-testid="notification-enabled-checkbox" style="accent-color: var(--primary);" checked>
+            <label for="notification-enabled" class="text-sm" style="color: var(--text);">通知を有効にする</label>
+          </div>
+          <button type="button" class="action-btn w-full" data-testid="save-notification-button">
+            通知設定を保存
+          </button>
+        </form>
+      </div>
+
+      <!-- 通知履歴 -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">通知履歴</h3>
+        <div class="space-y-3 max-h-80 overflow-y-auto">
+          <div class="p-3 rounded border-l-3" style="background: rgba(0,0,0,0.15); border-left-color: #22c55e;">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium" style="color: var(--text);">ユーザー登録通知</span>
+              <span class="text-xs" style="color: var(--text-muted);">2024-01-15 14:30</span>
+            </div>
+            <p class="text-xs" style="color: var(--text-muted);">新規ユーザーが登録されました</p>
+          </div>
+          <div class="p-3 rounded border-l-3" style="background: rgba(0,0,0,0.15); border-left-color: #f59e0b;">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium" style="color: var(--text);">システムエラー</span>
+              <span class="text-xs" style="color: var(--text-muted);">2024-01-15 12:15</span>
+            </div>
+            <p class="text-xs" style="color: var(--text-muted);">API接続エラーが発生しました</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- マスタ設定タブ -->
+  <div id="master-panel" class="tab-panel hidden">
+    <div class="grid grid-cols-3 gap-4">
+      <!-- アプリ基本設定 -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">アプリ基本設定</h3>
+        <form class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">アプリ名</label>
+            <input type="text" name="appName" data-testid="app-name-input" value="会員向けアプリ" 
+                   class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">バージョン</label>
+            <input type="text" name="version" data-testid="version-input" value="1.2.3" 
+                   class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">環境</label>
+            <select name="environment" data-testid="environment-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="production">本番環境</option>
+              <option value="staging">ステージング</option>
+              <option value="development">開発環境</option>
+              <option value="testing">テスト環境</option>
+            </select>
+          </div>
+          <button type="button" class="action-btn w-full" data-testid="save-app-config-button">
+            設定を保存
+          </button>
+        </form>
+      </div>
+
+      <!-- API設定 -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">API設定</h3>
+        <form class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">APIエンドポイント</label>
+            <input type="url" name="apiEndpoint" data-testid="api-endpoint-input" 
+                   class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);" 
+                   placeholder="https://api.example.com">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">認証方式</label>
+            <select name="authMethod" data-testid="auth-method-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="">選択してください</option>
+              <option value="bearer">Bearer Token</option>
+              <option value="basic">Basic認証</option>
+              <option value="oauth">OAuth 2.0</option>
+              <option value="apikey">API Key</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">タイムアウト（秒）</label>
+            <input type="number" name="timeout" data-testid="timeout-input" value="30" 
+                   class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+          </div>
+          <button type="button" class="action-btn w-full" data-testid="save-api-config-button">
+            API設定を保存
+          </button>
+        </form>
+      </div>
+
+      <!-- セキュリティ設定 -->
+      <div class="card p-4" style="background: var(--bg-card);">
+        <h3 class="text-base font-medium mb-4" style="color: var(--text);">セキュリティ設定</h3>
+        <form class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">セッション有効期限（分）</label>
+            <input type="number" name="sessionTimeout" data-testid="session-timeout-input" value="60" 
+                   class="w-full px-3 py-2 text-sm rounded border" 
+                   style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--text-muted);">パスワード強度</label>
+            <select name="passwordStrength" data-testid="password-strength-select" class="w-full px-3 py-2 text-sm rounded border" 
+                    style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+              <option value="low">低（6文字以上）</option>
+              <option value="medium">中（8文字以上、英数字）</option>
+              <option value="high">高（10文字以上、英数記号）</option>
+              <option value="strict">厳格（12文字以上、複合条件）</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="two-factor" name="twoFactor" data-testid="two-factor-checkbox" style="accent-color: var(--primary);">
+              <label for="two-factor" class="text-sm" style="color: var(--text);">二要素認証を有効にする</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="ip-restriction" name="ipRestriction" data-testid="ip-restriction-checkbox" style="accent-color: var(--primary);">
+              <label for="ip-restriction" class="text-sm" style="color: var(--text);">IP制限を有効にする</label>
+            </div>
+          </div>
+          <button type="button" class="action-btn w-full" data-testid="save-security-config-button">
+            セキュリティ設定を保存
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 監査ログタブ -->
+  <div id="audit-panel" class="tab-panel hidden">
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <input type="text" id="audit-search" data-testid="audit-search" placeholder="ユーザー・操作で検索" 
+               class="px-3 py-2 text-sm rounded border" 
+               style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+        <select id="audit-action-filter" data-testid="audit-action-filter" class="px-3 py-2 text-sm rounded border" 
+                style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); color: var(--text);">
+          <option value="">全ての操作</option>
+          <option value="login">ログイン</option>
+          <option value="logout">ログアウト</option>
+          <option value="create">作成</option>
+          <option value="update">更新</option>
+          <option value="delete">削除</option>
+        </select>
+        <button class="action-btn secondary" data-testid="audit-search-button">検索</button>
+      </div>
+      <button class="action-btn secondary" data-testid="export-audit-button">CSVエクスポート</button>
+    </div>
+
+    <div class="card" style="background: var(--bg-card);">
+      <div class="table-wrap">
+        <table data-testid="audit-log-list">
+          <thead>
+            <tr>
+              <th style="color: var(--text);">日時</th>
+              <th style="color: var(--text);">ユーザー</th>
+              <th style="color: var(--text);">操作</th>
+              <th style="color: var(--text);">対象</th>
+              <th style="color: var(--text);">IPアドレス</th>
+              <th style="color: var(--text);">結果</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div></label>
+                <input type="text" class="field-input" value="会員向けアプリ">
+              </div>
+              <div class="form-field">
+                <label class="field-label">バージョン</label>
+                <input type="text" class="field-input" value="1.2.3">
+              </div>
+              <div class="form-field">
+                <label class="field-label">メンテナンスモード</label>
+                <select class="field-input">
+                  <option value="off">無効</option>
+                  <option value="on">有効</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">新規登録</label>
+                <select class="field-input">
+                  <option value="open">オープン</option>
+                  <option value="approval">承認制</option>
+                  <option value="closed">停止中</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="section-title">通知設定</h2>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">メール通知</label>
+                <select class="field-input">
+                  <option value="enabled">有効</option>
+                  <option value="disabled">無効</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">プッシュ通知</label>
+                <select class="field-input">
+                  <option value="enabled">有効</option>
+                  <option value="disabled">無効</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">通知頻度</label>
+                <select class="field-input">
+                  <option value="realtime">リアルタイム</option>
+                  <option value="hourly">1時間ごと</option>
+                  <option value="daily">1日1回</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="section-title">セキュリティ設定</h2>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">パスワード有効期限（日）</label>
+                <input type="number" class="field-input" value="90">
+              </div>
+              <div class="form-field">
+                <label class="field-label">ログイン試行回数上限</label>
+                <input type="number" class="field-input" value="5">
+              </div>
+              <div class="form-field">
+                <label class="field-label">セッション有効期限（分）</label>
+                <input type="number" class="field-input" value="120">
+              </div>
+              <div class="form-field">
+                <label class="field-label">二要素認証</label>
+                <select class="field-input">
+                  <option value="optional">任意</option>
+                  <option value="required">必須</option>
+                  <option value="disabled">無効</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn">リセット</button>
+            <button class="btn btn-primary">設定を保存</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showScreen(screenId) {
+      // Update page title
+      const titles = {
+        'scr-1': 'ダッシュボード',
+        'scr-2': 'データ一覧', 
+        'scr-3': '詳細・編集',
+        'scr-4': '設定'
+      };
+      
+      const titleEl = document.getElementById('current-page-title');
+      if (titleEl && titles[screenId]) {
+        titleEl.textContent = titles[screenId];
+      }
+    }
+  </script>
+
+  <script>
+(function() {
+  var TABLE_DEFS = window.AIVIC_TABLES || [];
+  var PRESET_SEED = window.AIVIC_PRESET_SEED || {};
+  var SYSTEM_NAME = window.AIVIC_SYSTEM_NAME || "";
+  var APP_ID = window.AIVIC_APP_ID || "";
+  var API_URL = (window.AIVIC_API_URL && window.AIVIC_API_URL !== "REPLACE_WITH_API_URL")
+    ? window.AIVIC_API_URL : window.location.origin;
+
+  // 通知 helper（SPA 版と同じ）
+  window.aivicNotify = (function() {
+    function ensureContainer() {
+      var c = document.getElementById("aivic-toast-container");
+      if (c) return c;
+      c = document.createElement("div");
+      c.id = "aivic-toast-container";
+      c.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:360px;";
+      document.body.appendChild(c);
+      return c;
+    }
+    function show(msg, type) {
+      var c = ensureContainer();
+      var el = document.createElement("div");
+      el.textContent = msg;
+      el.style.cssText = "padding:10px 16px;border-radius:8px;font-size:13px;line-height:1.4;pointer-events:auto;color:#fff;background:" + (type === "error" ? "#dc2626" : "#d97706");
+      c.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = "opacity .3s";
+        el.style.opacity = "0";
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+      }, type === "error" ? 6000 : 4500);
+    }
+    return {
+      error: function(msg) { show("❌ " + msg, "error"); },
+      warn:  function(msg) { show("⚠️ " + msg, "warn"); },
+    };
+  })();
+
+  // CRUD API（SPA 版と同じ）
+  window.aivicApi = (function() {
+    function dbErr(op) { window.aivicNotify.error("データベースエラー（" + op + "）: APIサーバーに接続できません。"); }
+    function newId() { return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2); }
+    function q(i) {
+      var t = TABLE_DEFS[i];
+      var dbP = (window.AIVIC_DB_TYPE && window.AIVIC_DB_TYPE !== "dynamodb") ? "&db=" + encodeURIComponent(window.AIVIC_DB_TYPE) : "";
+      return "?app=" + encodeURIComponent(APP_ID) + "&system=" + encodeURIComponent(SYSTEM_NAME) + "&table=" + encodeURIComponent(t ? t.tableName : "table" + i) + dbP;
+    }
+    return {
+      list: async function(tableIndex) {
+        if (!API_URL) return [];
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex)); var d = await r.json(); return Array.isArray(d) ? d : (d.items || []); }
+        catch(e) { dbErr("データ取得"); return []; }
+      },
+      save: async function(tableIndex, item) {
+        if (!API_URL) { dbErr("保存"); return null; }
+        var now = new Date().toISOString();
+        var rec = Object.assign({}, item, { id: item.id || newId(), createdAt: item.createdAt || now, updatedAt: now });
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex), { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(rec) }); return await r.json(); }
+        catch(e) { dbErr("保存"); return null; }
+      },
+      update: async function(tableIndex, id, changes) {
+        if (!API_URL) { dbErr("更新"); return null; }
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(Object.assign({}, changes, {updatedAt: new Date().toISOString()})) }); return await r.json(); }
+        catch(e) { dbErr("更新"); return null; }
+      },
+      delete: async function(tableIndex, id) {
+        if (!API_URL) { dbErr("削除"); return {deleted:false}; }
+        try { await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), {method:"DELETE"}); return {deleted:true}; }
+        catch(e) { dbErr("削除"); return {deleted:false}; }
+      },
+    };
+  })();
+
+  // showScreen はマルチページ構成ではページ遷移として動く。
+  // パネル切替 (旧 SPA 動作) ではなく ./<id>.html への navigate に再定義する。
+  // 既存の AI 生成 shell が onclick="showScreen('x')" の形で書いていても透過的に動く。
+  //
+  // 防御層:
+  // (a) 同じ画面 ID なら no-op（AIVIC_PAGE_SCREEN_ID 一致 / pathname 一致のどちらか）
+  // (b) 同じ navigate を 100ms 以内に繰り返したら break loop（onclick 連打ではなく自動ループ対策）
+  // (c) DOMContentLoaded 直後 1.5s 以内の「自動 navigate」は警告 + 抑制（手動 click は通す）
+  var _aivicNavLastTime = 0;
+  var _aivicNavLastTarget = "";
+  var _aivicReady = false;
+  window.showScreen = function(screenId) {
+    if (!screenId) return;
+    if (screenId === window.AIVIC_PAGE_SCREEN_ID) return; // 既に該当ページに居る
+    // pathname ベースの保険: AIVIC_PAGE_SCREEN_ID が未設定でも、現在 URL と一致したら抑制
+    var targetPath = './' + encodeURIComponent(screenId) + '.html';
+    var currentName = (window.location.pathname.split('/').pop() || '');
+    if (currentName === (encodeURIComponent(screenId) + '.html') ||
+        currentName === (screenId + '.html')) {
+      return;
+    }
+    var now = Date.now();
+    if (_aivicNavLastTarget === targetPath && (now - _aivicNavLastTime) < 100) {
+      console.warn('[aivic] showScreen 連続呼び出し検知。無限ループ防止のため抑制:', screenId);
+      return;
+    }
+    if (!_aivicReady) {
+      // ページロード直後の自動 navigate は AI shell の load-time 副作用の可能性が高い。
+      // ボタンクリック等のユーザー操作は ready 後なので影響しない。
+      console.warn('[aivic] DOMContentLoaded 前の showScreen 呼び出し。抑制:', screenId);
+      return;
+    }
+    _aivicNavLastTime = now;
+    _aivicNavLastTarget = targetPath;
+    window.location.href = targetPath;
+  };
+
+  // 初回マウント時のサンプルデータ投入
+  function seedAllIfEmpty() {
+    if (!API_URL) return Promise.resolve();
+    return Promise.all(TABLE_DEFS.map(function(t, i) {
+      var preset = PRESET_SEED[t.tableName];
+      if (!Array.isArray(preset) || preset.length === 0) return Promise.resolve();
+      return window.aivicApi.list(i).then(function(existing) {
+        if (existing && existing.length > 0) return;
+        return Promise.all(preset.map(function(row) { return window.aivicApi.save(i, row); }));
+      }).catch(function() {});
+    }));
+  }
+
+  // ── 初期表示: このページ専用の panel に initFn を実行 ──
+  // window.AIVIC_PAGE_SCREEN_ID と AIVIC_PAGE_INIT_JS は composeMultipagePages
+  // でページ単位に埋め込まれる。
+  document.addEventListener("DOMContentLoaded", function() {
+    // 1.5 秒後に必ず _aivicReady を立てる（initFn が走らないページや失敗ページでも
+    // ユーザーが操作できるようにする保険）。initFn 完了時にも立てるので早い方が勝つ。
+    setTimeout(function() { _aivicReady = true; }, 1500);
+    var pageScreenId = window.AIVIC_PAGE_SCREEN_ID;
+    if (!pageScreenId) return;
+
+    // sidebar / nav の active class を付与（現在ページのリンクを強調）
+    document.querySelectorAll('[data-aivic-nav]').forEach(function(btn) {
+      var isActive = btn.getAttribute("data-aivic-nav") === pageScreenId;
+      btn.classList.toggle("aivic-active", isActive);
+      btn.setAttribute("aria-current", isActive ? "page" : "false");
+    });
+
+    var container = document.querySelector('[data-aivic-panel="' + pageScreenId + '"]');
+    if (!container) return;
+
+    // **content 要素の hidden 強制除去（2026-05-24 Playwright 大量 fail 対応）**:
+    // AI が生成した panel HTML には class="hidden" / hidden 属性 / style="display:none"
+    // が content 要素（#xxx-tbody / #xxx-list / [data-testid="error-message"] 等）に付いて
+    // いることがある。それを Playwright が toBeVisible() で待ち続けて timeout する事故が頻発。
+    //
+    // ポリシー: panel コンテナ配下の全要素について以下を実行:
+    //   - class="hidden" / display:none / hidden 属性を **content 要素では除去**
+    //   - **modal 系**（.modal, .modal-backdrop, [role="dialog"], [data-modal] 等）は除外
+    //     （これらは仕様上初期非表示が正しい）
+    var isModalLike = function(el) {
+      if (!el || !el.classList) return false;
+      var cn = String(el.className || "");
+      if (/modal|dialog|overlay|popup|dropdown|tooltip/i.test(cn)) return true;
+      var role = el.getAttribute && el.getAttribute("role");
+      if (role === "dialog" || role === "alertdialog" || role === "tooltip" || role === "menu") return true;
+      if (el.hasAttribute && (el.hasAttribute("data-modal") || el.hasAttribute("data-dropdown") || el.hasAttribute("data-popup"))) return true;
+      return false;
+    };
+    var unhideContentElements = function(root) {
+      var all = root.querySelectorAll('.hidden, [hidden], [style*="display:none"], [style*="display: none"]');
+      for (var k = 0; k < all.length; k++) {
+        var el = all[k];
+        // modal 系は触らない
+        if (isModalLike(el)) continue;
+        // parent chain で modal 内なら触らない
+        var p = el.parentElement;
+        var insideModal = false;
+        while (p && p !== root) {
+          if (isModalLike(p)) { insideModal = true; break; }
+          p = p.parentElement;
+        }
+        if (insideModal) continue;
+        // 除去
+        el.classList.remove('hidden');
+        el.removeAttribute('hidden');
+        if (el.style && el.style.display === 'none') el.style.display = '';
+      }
+    };
+    try { unhideContentElements(container); } catch (e) { console.warn('[aivic] unhideContent failed:', e); }
+
+    var initJsSource = window.AIVIC_PAGE_INIT_JS;
+    if (!initJsSource) {
+      // initJs が無くてもサンプルデータ投入は走らせる
+      seedAllIfEmpty();
+      return;
+    }
+    var initFn = null;
+    try {
+      initFn = (new Function("return (" + initJsSource + ")"))();
+    } catch (e) {
+      console.error("[aivic] initJs compile error:", pageScreenId, e);
+      return;
+    }
+    if (typeof initFn !== "function") return;
+
+    seedAllIfEmpty().then(function() {
+      return Promise.all(TABLE_DEFS.map(function(t, i) {
+        return window.aivicApi.list(i)
+          .then(function(records) { return Object.assign({}, t, { records: records }); })
+          .catch(function() { return Object.assign({}, t, { records: [] }); });
+      }));
+    }).then(function(tables) {
+      try { initFn(container, API_URL, tables); } catch (e) { console.error("[aivic] initFn error:", pageScreenId, e); }
+      // 初期 panel init が一巡したら _aivicReady を立てる。以降のユーザー操作 (onclick) で
+      // showScreen が呼ばれた場合は通常通り navigate する。
+      _aivicReady = true;
+    });
+  });
+})();
+
+</script>
+</body>
+</html>

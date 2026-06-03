@@ -1,0 +1,46 @@
+name: AIVIC Auto Test
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch: {}
+
+# 【一時設定】Playwright は省略中。Jest のみ実行。logic-scaffolder 品質改善のため iteration cycle を短縮（2026-05-24〜）
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        # --legacy-peer-deps: 2026-05-25 追加。
+        # 直前まで成功していた npm install が突然 ERESOLVE で fail（typescript@undefined）
+        # する事故が発生。npm の peer 解決が時々おかしくなる現象への防御策。
+        # 実際の install は同じ結果（typescript 5.x + ts-jest 29.x が入る）、peer の strict
+        # チェックだけスキップする。jest/ts-jest/typescript の組合せは実証済みで不健全ではない。
+        run: npm install --no-audit --no-fund --legacy-peer-deps
+      - name: Run Jest unit tests
+        id: jest
+        run: npx jest --ci --passWithNoTests --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+          JEST_JUNIT_OUTPUT_NAME: jest-junit.xml
+        continue-on-error: true
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+      - name: Determine overall status
+        if: always()
+        run: |
+          jest_outcome="${{ steps.jest.outcome }}"
+          echo "Jest: $jest_outcome (Playwright: skipped temporarily)"
+          if [ "$jest_outcome" != "success" ] && [ "$jest_outcome" != "skipped" ]; then
+            echo "::error::Jest failed (jest=$jest_outcome)"
+            exit 1
+          fi
