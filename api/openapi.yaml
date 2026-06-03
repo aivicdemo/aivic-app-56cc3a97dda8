@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: 会員向けアプリの開発 API
+  version: 0.1.0
+paths:
+  /resources:
+    get:
+      summary: /resources GET
+      responses:
+        '200':
+          description: OK
